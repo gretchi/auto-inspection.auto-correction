@@ -74,6 +74,7 @@ def main():
         problem_file = {
             "path": path,
             "filename": os.path.basename(path),
+            "contents": ""
         }
 
         problem_files.append(problem_file)
@@ -86,6 +87,8 @@ def main():
         contents = ""
         with open(problem_file["path"], "r") as fh:
             contents = fh.read()
+
+        problem_files[i]["contents"] = contents
 
         contents = re.sub(r"\n", "\\\\n", contents.strip())
 
@@ -103,18 +106,39 @@ def main():
 
     # print(problem_files)
 
-    return
+    while True:
+        print("\n問題番号を入力してください。終了する場合は `q` を入力してください。")
+        problem_number = input(f"[1-{len(problem_files)}]> ").strip()
+        problem_number = problem_number.encode()
+
+        if problem_number.lower() == "q":
+            print("終了します。")
+            logging.info("Script terminated by user.")
+            return
+
+        if not problem_number.isdigit():
+            print("無効な入力です。数字を入力してください。")
+            continue
+
+        problem_number = int(problem_number)
+
+        if problem_number < 1 or problem_number > len(problem_files):
+            print(f"1から{len(problem_files)}の範囲で入力してください。")
+            continue
+
+        break
+
+    system_prompt = SYSTEM_PROMPT + f"問題: {problem_files[problem_number-1]["contents"]}\n"
 
     completion = client.chat.completions.create(
         model="gpt-4o-mini",
         store=True,
         messages=[
             {
-                "role": "system", "content": SYSTEM_PROMPT
+                "role": "system", "content": system_prompt
             },
             {
                 "role": "user", "content": ""
-
             }
         ]
     )
